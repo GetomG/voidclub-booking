@@ -37,15 +37,22 @@ export default function BookingModal({
       setLoginLoading(true);
       const liff = await initLiff();
       if (!liff.isLoggedIn()) {
-        // Save date + seat so they survive the redirect (works for both LINE and external browser)
         sessionStorage.setItem("void_booking_date", date);
         if (tableId) sessionStorage.setItem("void_booking_seat", tableId);
         liff.login();
         return;
       }
-      const profile = await liff.getProfile();
-      console.log("✅ LINE PROFILE:", profile.displayName, profile.userId);
-      onLineLogin(profile.userId);
+      try {
+        const profile = await liff.getProfile();
+        console.log("✅ LINE PROFILE:", profile.displayName, profile.userId);
+        onLineLogin(profile.userId);
+      } catch {
+        // Token revoked/expired — force re-login
+        console.warn("⚠️ Token revoked, re-logging in...");
+        sessionStorage.setItem("void_booking_date", date);
+        if (tableId) sessionStorage.setItem("void_booking_seat", tableId);
+        liff.login();
+      }
     } catch (err) {
       console.error("LINE login failed:", err);
     } finally {

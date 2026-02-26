@@ -25,20 +25,18 @@ export default function Page() {
             const profile = await l.getProfile();
             setLineUserId(profile.userId);
             setDebug(`✅ ${profile.displayName} | inClient:${inClient}`);
-          } catch (e) {
-            setDebug(`❌ getProfile failed: ${String(e)} | inClient:${inClient}`);
+          } catch {
+            setDebug(`⚠️ stale token | inClient:${inClient}`);
             if (inClient) l.login();
           }
         } else if (inClient) {
-          setDebug(`not logged in + inClient → calling liff.login()`);
+          setDebug(`not logged in + inClient → auto login`);
           l.login();
         } else {
-          setDebug(`not logged in + external browser → waiting for button`);
+          setDebug(`not logged in + external browser`);
         }
       })
-      .catch((e) => {
-        setDebug(`❌ liff.init error: ${String(e)}`);
-      });
+      .catch((e) => setDebug(`❌ liff.init error: ${String(e)}`));
   }, []);
 
   // Restore date if we're returning from a LIFF login redirect
@@ -61,7 +59,7 @@ export default function Page() {
   return (
     <main className="p-4 text-white">
 
-      {/* 🐛 DEBUG BAR — remove after testing */}
+      {/* 🐛 DEBUG BAR — remove when done testing */}
       <div className="text-xs text-yellow-300 bg-black/60 border border-yellow-500/40 rounded px-2 py-1 mb-3 text-center break-all">
         {debug}
       </div>
