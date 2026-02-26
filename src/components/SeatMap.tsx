@@ -11,7 +11,11 @@ import Legend from "./legend";
 
 export default function SeatMap({ date }: { date: string }) {
   const [active, setActive] = useState<string | null>(null);
-  const [status, setStatus] = useState<Record<string, "available" | "booked">>({});
+  const [status, setStatus] = useState<Record<string, "available" | "booked">>(() => {
+    const init: Record<string, "available" | "booked"> = {};
+    Object.keys(seatPos).forEach((id) => (init[id] = "available"));
+    return init;
+  });
   const [noSchedule, setNoSchedule] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +32,7 @@ export default function SeatMap({ date }: { date: string }) {
     setLoading(true);
     try {
       const data = await fetchSeats(date);
-      setNoSchedule(!data.marked || data.marked.length === 0);
+      setNoSchedule(!data.marked);
       setStatus(buildStatus(data.marked ?? []));
     } catch (err) {
       console.error("❌ load error:", err);
@@ -40,7 +44,7 @@ export default function SeatMap({ date }: { date: string }) {
   async function silentLoad() {
     try {
       const data = await fetchSeats(date);
-      setNoSchedule(!data.marked || data.marked.length === 0);
+      setNoSchedule(!data.marked);
       setStatus(buildStatus(data.marked ?? []));
     } catch (err) {
       console.error("❌ silent load error:", err);
