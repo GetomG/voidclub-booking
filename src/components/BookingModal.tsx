@@ -37,7 +37,15 @@ export default function BookingModal({
       setLoginLoading(true);
       const liff = await initLiff();
       if (!liff.isLoggedIn()) {
-        liff.login(); // redirects into LINE login, page reloads after
+        if (liff.isInClient()) {
+          // Inside LINE but isLoggedIn() is false — something unexpected.
+          // Do NOT call liff.login() here; it would cause a redirect loop inside LINE.
+          console.warn("⚠️ Inside LINE but isLoggedIn() = false — skipping login redirect");
+          return;
+        }
+        // External browser: save the selected date so it survives the redirect.
+        sessionStorage.setItem("void_booking_date", date);
+        liff.login();
         return;
       }
       const profile = await liff.getProfile();

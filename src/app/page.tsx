@@ -25,6 +25,15 @@ export default function Page() {
       .catch((e) => console.warn("⚠️ LIFF init skipped (normal in browser):", e?.message));
   }, []);
 
+  // Restore date if we're returning from a LIFF login redirect
+  useEffect(() => {
+    const saved = sessionStorage.getItem("void_booking_date");
+    if (saved) {
+      setDate(new Date(saved));
+      sessionStorage.removeItem("void_booking_date");
+    }
+  }, []);
+
   function previousDay() {
     setDate((d) => addDays(d, -1));
   }
