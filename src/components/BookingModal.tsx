@@ -37,13 +37,7 @@ export default function BookingModal({
       setLoginLoading(true);
       const liff = await initLiff();
       if (!liff.isLoggedIn()) {
-        if (liff.isInClient()) {
-          // Inside LINE but isLoggedIn() is false — something unexpected.
-          // Do NOT call liff.login() here; it would cause a redirect loop inside LINE.
-          console.warn("⚠️ Inside LINE but isLoggedIn() = false — skipping login redirect");
-          return;
-        }
-        // External browser: save date + active seat so they survive the redirect.
+        // Save date + seat so they survive the redirect (works for both LINE and external browser)
         sessionStorage.setItem("void_booking_date", date);
         if (tableId) sessionStorage.setItem("void_booking_seat", tableId);
         liff.login();

@@ -17,15 +17,21 @@ export default function Page() {
     initLiff()
       .then(async (l) => {
         if (l.isLoggedIn()) {
-          // Already authorized — grab profile silently
-          const profile = await l.getProfile();
-          setLineUserId(profile.userId);
-          console.log("✅ Auto-logged in as", profile.displayName);
+          try {
+            // Try to get profile — fails if token is stale/revoked
+            const profile = await l.getProfile();
+            setLineUserId(profile.userId);
+            console.log("✅ Auto-logged in as", profile.displayName);
+          } catch {
+            // Token expired or revoked — re-authenticate
+            console.warn("⚠️ Stale token, re-authenticating...");
+            if (l.isInClient()) l.login();
+          }
         } else if (l.isInClient()) {
-          // Inside LINE app but not yet authorized → auto-trigger login (no button click needed)
+          // Inside LINE but not yet authorized → auto-trigger login
           l.login();
         }
-        // External browser → do nothing, user clicks the button manually
+        // External browser + not logged in → do nothing, user clicks button
       })
       .catch((e) => console.warn("⚠️ LIFF init skipped (normal in browser):", e?.message));
   }, []);
