@@ -1,15 +1,29 @@
 "use client";
 export const ssr = false;
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SeatMap from "@/components/SeatMap";
 import { format, addDays } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { initLiff } from "@/lib/liff";
 
 export default function Page() {
   const [date, setDate] = useState<Date>(new Date("2025-12-01"));
+  const [lineUserId, setLineUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    initLiff()
+      .then(async (l) => {
+        if (l.isLoggedIn()) {
+          const profile = await l.getProfile();
+          setLineUserId(profile.userId);
+          console.log("✅ Auto-logged in as", profile.displayName);
+        }
+      })
+      .catch((e) => console.warn("⚠️ LIFF init skipped (normal in browser):", e?.message));
+  }, []);
 
   function previousDay() {
     setDate((d) => addDays(d, -1));
@@ -80,7 +94,7 @@ export default function Page() {
       </div>
 
       {/* SEAT MAP */}
-      <SeatMap date={format(date, "yyyy-MM-dd")} />
+      <SeatMap date={format(date, "yyyy-MM-dd")} lineUserId={lineUserId} onLineLogin={setLineUserId} />
     </main>
   );
 }

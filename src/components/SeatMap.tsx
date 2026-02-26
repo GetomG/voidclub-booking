@@ -9,7 +9,15 @@ import ZoneBlock from "./ZoneBlock";
 import ZoneLabel from "./ZoneLabel";
 import Legend from "./legend";
 
-export default function SeatMap({ date }: { date: string }) {
+export default function SeatMap({
+  date,
+  lineUserId,
+  onLineLogin,
+}: {
+  date: string;
+  lineUserId: string | null;
+  onLineLogin: (userId: string) => void;
+}) {
   const [active, setActive] = useState<string | null>(null);
   const [status, setStatus] = useState<Record<string, "available" | "booked">>(() => {
     const init: Record<string, "available" | "booked"> = {};
@@ -123,26 +131,23 @@ export default function SeatMap({ date }: { date: string }) {
 
         {/* BOOKING MODAL */}
         <BookingModal
-        open={!!active}
-        tableId={active}
-        date={date}
-        onClose={() => setActive(null)}
-        onConfirm={async (name, lineUserId) => {
-          if (!active) return;
-
-          try {
-            console.log("LINE UID:", lineUserId);
-
-            // 🚀 send everything to Apps Script (we’ll update bookSeat next)
-            await bookSeat(active, name, date, lineUserId);
-
-            await loadWithSpinner();
-            setActive(null);
-          } catch (err) {
-            console.error("❌ booking error:", err);
-          }
-        }}
-      />
+          open={!!active}
+          tableId={active}
+          date={date}
+          lineUserId={lineUserId}
+          onLineLogin={onLineLogin}
+          onClose={() => setActive(null)}
+          onConfirm={async (name) => {
+            if (!active) return;
+            try {
+              await bookSeat(active, name, date, lineUserId);
+              await loadWithSpinner();
+              setActive(null);
+            } catch (err) {
+              console.error("❌ booking error:", err);
+            }
+          }}
+        />
       </div>
     </div>
   );

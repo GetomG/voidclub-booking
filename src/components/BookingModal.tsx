@@ -8,22 +8,23 @@ export default function BookingModal({
   open,
   tableId,
   date,
+  lineUserId,
+  onLineLogin,
   onClose,
   onConfirm,
 }: {
   open: boolean;
   tableId: string | null;
   date: string;
+  lineUserId: string | null;
+  onLineLogin: (userId: string) => void;
   onClose: () => void;
-  onConfirm: (name: string, lineUserId: string | null) => Promise<void>;
+  onConfirm: (name: string) => Promise<void>;
 }) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
-
-  // ⭐ store LINE user id
-  const [lineUserId, setLineUserId] = useState<string | null>(null);
 
   if (!open || !tableId) return null;
   const info = seatInfo[tableId];
@@ -34,22 +35,16 @@ export default function BookingModal({
   async function handleLineLogin() {
     try {
       setLoginLoading(true);
-
       const liff = await initLiff();
-
       if (!liff.isLoggedIn()) {
-        liff.login();
+        liff.login(); // redirects into LINE login, page reloads after
         return;
       }
-
       const profile = await liff.getProfile();
-      console.log("LINE PROFILE:", profile);
-
-      setLineUserId(profile.userId);
-      alert(`Logged in as ${profile.displayName}`);
+      console.log("✅ LINE PROFILE:", profile.displayName, profile.userId);
+      onLineLogin(profile.userId);
     } catch (err) {
       console.error("LINE login failed:", err);
-      alert("LINE login failed.");
     } finally {
       setLoginLoading(false);
     }
@@ -147,19 +142,11 @@ export default function BookingModal({
 
               <button
                 onClick={async () => {
-                  if (!name.trim()) return;
-                  if (!lineUserId) {
-                    alert("Please login with LINE before booking.");
-                    return;
-                  }
+                  if (!name.trim() || !lineUserId) return;
                   setLoading(true);
-
                   try {
-                    // ⭐ VERY IMPORTANT:
-                    // Pass BOTH name + lineUserId
-                    await onConfirm(name.trim(), lineUserId);
-
-                    setConfirmed(true); // switch UI
+                    await onConfirm(name.trim());
+                    setConfirmed(true);
                   } finally {
                     setLoading(false);
                   }
