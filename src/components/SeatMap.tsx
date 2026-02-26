@@ -18,7 +18,12 @@ export default function SeatMap({
   lineUserId: string | null;
   onLineLogin: (userId: string) => void;
 }) {
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const saved = sessionStorage.getItem("void_booking_seat");
+    if (saved) { sessionStorage.removeItem("void_booking_seat"); return saved; }
+    return null;
+  });
   const [status, setStatus] = useState<Record<string, "available" | "booked">>(() => {
     const init: Record<string, "available" | "booked"> = {};
     Object.keys(seatPos).forEach((id) => (init[id] = "available"));

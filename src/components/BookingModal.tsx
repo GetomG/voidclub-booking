@@ -43,8 +43,9 @@ export default function BookingModal({
           console.warn("⚠️ Inside LINE but isLoggedIn() = false — skipping login redirect");
           return;
         }
-        // External browser: save the selected date so it survives the redirect.
+        // External browser: save date + active seat so they survive the redirect.
         sessionStorage.setItem("void_booking_date", date);
+        if (tableId) sessionStorage.setItem("void_booking_seat", tableId);
         liff.login();
         return;
       }

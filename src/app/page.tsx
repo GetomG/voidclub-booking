@@ -17,10 +17,15 @@ export default function Page() {
     initLiff()
       .then(async (l) => {
         if (l.isLoggedIn()) {
+          // Already authorized — grab profile silently
           const profile = await l.getProfile();
           setLineUserId(profile.userId);
           console.log("✅ Auto-logged in as", profile.displayName);
+        } else if (l.isInClient()) {
+          // Inside LINE app but not yet authorized → auto-trigger login (no button click needed)
+          l.login();
         }
+        // External browser → do nothing, user clicks the button manually
       })
       .catch((e) => console.warn("⚠️ LIFF init skipped (normal in browser):", e?.message));
   }, []);
