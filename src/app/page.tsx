@@ -12,28 +12,33 @@ import { initLiff } from "@/lib/liff";
 export default function Page() {
   const [date, setDate] = useState<Date>(new Date("2025-12-01"));
   const [lineUserId, setLineUserId] = useState<string | null>(null);
+  const [debug, setDebug] = useState<string>("⏳ initializing...");
 
   useEffect(() => {
     initLiff()
       .then(async (l) => {
-        if (l.isLoggedIn()) {
+        const inClient = l.isInClient();
+        const loggedIn = l.isLoggedIn();
+        setDebug(`inClient:${inClient} | loggedIn:${loggedIn}`);
+        if (loggedIn) {
           try {
-            // Try to get profile — fails if token is stale/revoked
             const profile = await l.getProfile();
             setLineUserId(profile.userId);
-            console.log("✅ Auto-logged in as", profile.displayName);
-          } catch {
-            // Token expired or revoked — re-authenticate
-            console.warn("⚠️ Stale token, re-authenticating...");
-            if (l.isInClient()) l.login();
+            setDebug(`✅ ${profile.displayName} | inClient:${inClient}`);
+          } catch (e) {
+            setDebug(`❌ getProfile failed: ${String(e)} | inClient:${inClient}`);
+            if (inClient) l.login();
           }
-        } else if (l.isInClient()) {
-          // Inside LINE but not yet authorized → auto-trigger login
+        } else if (inClient) {
+          setDebug(`not logged in + inClient → calling liff.login()`);
           l.login();
+        } else {
+          setDebug(`not logged in + external browser → waiting for button`);
         }
-        // External browser + not logged in → do nothing, user clicks button
       })
-      .catch((e) => console.warn("⚠️ LIFF init skipped (normal in browser):", e?.message));
+      .catch((e) => {
+        setDebug(`❌ liff.init error: ${String(e)}`);
+      });
   }, []);
 
   // Restore date if we're returning from a LIFF login redirect
@@ -55,6 +60,11 @@ export default function Page() {
 
   return (
     <main className="p-4 text-white">
+
+      {/* 🐛 DEBUG BAR — remove after testing */}
+      <div className="text-xs text-yellow-300 bg-black/60 border border-yellow-500/40 rounded px-2 py-1 mb-3 text-center break-all">
+        {debug}
+      </div>
 
       {/* TITLE */}
       <h1 className="text-center text-2xl font-bold mb-4 tracking-wide">
